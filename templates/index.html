@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>NoteVault</title>
+
+<link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h1>NoteVault</h1>
+
+<div id="folders"></div>
+
+</div>
+
+<div class="main">
+
+<div class="toolbar">
+
+<button id="newFolder">
++ Folder
+</button>
+
+<button id="newNote">
++ Note
+</button>
+
+</div>
+
+<div id="noteList"></div>
+
+<div id="editor">
+
+<input
+id="title"
+placeholder="Title"
+>
+
+<textarea
+id="content"
+placeholder="Start writing..."
+></textarea>
+
+<button id="save">
+Save
+</button>
+
+</div>
+
+</div>
+
+<script src="/static/script.js"></script>
+
+</body>
+
+</html>

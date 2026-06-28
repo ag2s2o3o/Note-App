@@ -1,0 +1,31 @@
+{
+    "folders": [
+        {
+            "id": 1,
+            "name": "General",
+            "notes": [
+                {
+                    "content": "Welcome to NoteVault!",
+                    "id": 1,
+                    "title": "Welcome"
+                }
+            ]
+        },
+        {
+            "id": 1782669191152,
+            "name": "Engineering mechanics",
+            "notes": [
+                {
+                    "content": "Learn from lecture.",
+                    "id": 1782669196445,
+                    "title": "Auto transformer"
+                },
+                {
+                    "id": 1782669331233,
+                    "title": "SC OC",
+                    "content": "Do questions to understand "
+                }
+            ]
+        }
+    ]
+}
