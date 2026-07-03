@@ -7,12 +7,44 @@
 
 <title>NoteVault</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="/static/style.css">
 
 </head>
 
 <body>
 
+<div id="startOverlay">Click to Enter</div>
+
+<audio id="bgMusic" loop>
+    <source src="{{ url_for('static', filename='audio/' + track_file) }}" type="audio/mpeg">
+</audio>
+
+<!-- "Fine" health status — top right -->
+<div class="health-status">
+    <div class="health-ecg">
+        <svg width="128" height="22" viewBox="0 0 128 22" xmlns="http://www.w3.org/2000/svg">
+            <polyline
+                points="0,11 10,11 14,4 18,18 22,11 28,11 32,5 34,11 64,11 74,11 78,4 82,18 86,11 92,11 96,5 98,11 128,11"
+                fill="none" stroke="#58e870" stroke-width="1.5" stroke-linejoin="round"
+            />
+        </svg>
+    </div>
+    <span class="health-label">Fine</span>
+</div>
+<!-- Inventory bar — 4x2 grid, RE1 item-box style -->
+<div class="inventory-bar">
+    <div class="item-slot"><img src="/static/icons/Ink-Ribbon.jpg" alt="Ink Ribbon"><span class="item-count">1</span></div>
+    <div class="item-slot"><img src="/static/icons/greenherb.jpg" alt="Green Herb"><span class="item-count">1</span></div>
+    <div class="item-slot"><img src="/static/icons/gun.jpg" alt="Gun"></div>
+    <div class="item-slot"><img src="/static/icons/Bullets.jpg" alt="ammo"><span class="item-count">15</span></div>
+    <div class="item-slot empty"></div>
+    <div class="item-slot empty"></div>
+    <div class="item-slot empty"></div>
+    <div class="item-slot empty"></div>
+</div>
 <div class="sidebar">
 
 <h1>NoteVault</h1>
@@ -49,9 +81,8 @@ id="content"
 placeholder="Start writing..."
 ></textarea>
 
-<button id="save">
-Save
-</button>
+<!-- empty — typewriter icon drawn by CSS -->
+<button id="save"></button>
 
 </div>
 

@@ -4,35 +4,177 @@ let currentNote = null;
 
 const foldersDiv = document.getElementById("folders");
 const noteList = document.getElementById("noteList");
-
 const titleInput = document.getElementById("title");
 const contentInput = document.getElementById("content");
 
-async function loadNotes(){
+let saveTimer = null;
 
-    const res = await fetch("/notes");
-    data = await res.json();
+// ------------------------------------
+// Click Sounds (reusable)
+// ------------------------------------
 
-    renderFolders();
+const typewriterSound = new Audio("/static/Select/re_typewriter.mp3");
+typewriterSound.volume = 0.6;
+
+function playTypewriter() {
+
+    typewriterSound.currentTime = 0;
+
+    typewriterSound.play().catch(() => {});
+
 }
 
-function renderFolders(){
+// Select sound uses the Web Audio API instead of
+// HTMLAudioElement. Resetting currentTime + play()
+// on a shared <audio> forces a re-seek/re-buffer on
+// every click, which adds latency. Decoding the file
+// once into an AudioBuffer and firing a fresh
+// BufferSource per click removes that delay and lets
+// rapid clicks overlap cleanly.
 
-    foldersDiv.innerHTML="";
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let selectBuffer = null;
 
-    data.folders.forEach(folder=>{
+fetch("/static/Select/re_2_cursor_select.mp3")
+    .then(res => res.arrayBuffer())
+    .then(bytes => audioCtx.decodeAudioData(bytes))
+    .then(buffer => { selectBuffer = buffer; })
+    .catch(err => console.error("Failed to load select sound:", err));
 
-        const div=document.createElement("div");
+function playSelect() {
 
-        div.className="folder";
+    if (!selectBuffer)
+        return;
 
-        div.innerText=folder.name;
+    if (audioCtx.state === "suspended")
+        audioCtx.resume();
 
-        div.onclick=()=>{
+    const source = audioCtx.createBufferSource();
+    source.buffer = selectBuffer;
 
-            currentFolder=folder;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.1; // 40% volume
 
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    source.start(0);
+
+}
+
+// ------------------------------------
+// Load Notes
+// ------------------------------------
+
+async function loadNotes() {
+
+    const res = await fetch("/notes");
+
+    data = await res.json();
+
+    if (data.folders.length > 0) {
+
+        currentFolder = data.folders[0];
+
+    }
+
+    renderFolders();
+    renderNotes();
+
+}
+
+// ------------------------------------
+// Folder Rendering
+// ------------------------------------
+
+function renderFolders() {
+
+    foldersDiv.innerHTML = "";
+
+    data.folders.forEach(folder => {
+
+        const div = document.createElement("div");
+
+        div.className = "folder";
+
+div.innerHTML = `
+    <span>${folder.name}</span>
+    <span class="delete-btn">🗑️</span>
+`;
+
+        if (folder === currentFolder)
+            div.style.background = "#262c38";
+
+        div.onclick = (e) => {
+
+            e.stopPropagation();
+
+            playSelect();
+
+            currentFolder = folder;
+
+            currentNote = null;
+
+            titleInput.value = "";
+            contentInput.value = "";
+
+            renderFolders();
             renderNotes();
+
+        };
+
+        div.ondblclick = (e) => {
+
+            e.stopPropagation();
+
+            const newName = prompt(
+                "Rename Folder",
+                folder.name
+            );
+
+            if (!newName)
+                return;
+
+            folder.name = newName.trim();
+
+            renderFolders();
+
+            saveCurrent();
+
+        };
+
+        div.oncontextmenu = (e) => {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            if (!confirm(
+                `Delete folder "${folder.name}" ?`
+            ))
+                return;
+
+            data.folders =
+                data.folders.filter(
+                    f => f.id !== folder.id
+                );
+
+            if (currentFolder === folder) {
+
+                currentFolder =
+                    data.folders[0] || null;
+
+                currentNote = null;
+
+                titleInput.value = "";
+                contentInput.value = "";
+
+            }
+
+            renderFolders();
+            renderNotes();
+
+            saveCurrent();
 
         };
 
@@ -42,25 +184,101 @@ function renderFolders(){
 
 }
 
-function renderNotes(){
+// ------------------------------------
+// Note Rendering
+// ------------------------------------
 
-    noteList.innerHTML="";
+function renderNotes() {
 
-    currentFolder.notes.forEach(note=>{
+    noteList.innerHTML = "";
 
-        const div=document.createElement("div");
+    if (!currentFolder)
+        return;
 
-        div.className="note";
+    currentFolder.notes.forEach(note => {
 
-        div.innerHTML="<b>"+note.title+"</b>";
+        const div = document.createElement("div");
 
-        div.onclick=()=>{
+        div.className = "note";
 
-            currentNote=note;
+        div.innerHTML =
+            `<b>${note.title}</b>`;
 
-            titleInput.value=note.title;
+        if (note === currentNote)
+            div.style.border =
+                "1px solid #4d6bff";
 
-            contentInput.value=note.content;
+        div.onclick = (e) => {
+
+            e.stopPropagation();
+
+            playSelect();
+
+            currentNote = note;
+
+            titleInput.value = note.title;
+
+            contentInput.value =
+                note.content;
+
+            renderNotes();
+
+        };
+
+        div.ondblclick = (e) => {
+
+            e.stopPropagation();
+
+            const newTitle =
+                prompt(
+                    "Rename Note",
+                    note.title
+                );
+
+            if (!newTitle)
+                return;
+
+            note.title =
+                newTitle.trim();
+
+            if (currentNote === note)
+                titleInput.value =
+                    note.title;
+
+            renderNotes();
+
+            saveCurrent();
+
+        };
+
+        div.oncontextmenu = (e) => {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            if (!confirm(
+                `Delete "${note.title}" ?`
+            ))
+                return;
+
+            currentFolder.notes =
+                currentFolder.notes.filter(
+                    n => n.id !== note.id
+                );
+
+            if (currentNote === note) {
+
+                currentNote = null;
+
+                titleInput.value = "";
+                contentInput.value = "";
+
+            }
+
+            renderNotes();
+
+            saveCurrent();
 
         };
 
@@ -70,75 +288,216 @@ function renderNotes(){
 
 }
 
-document.getElementById("newFolder").onclick=()=>{
+// ------------------------------------
+// New Folder
+// ------------------------------------
 
-    const name=prompt("Folder name");
+document.getElementById("newFolder").onclick = () => {
 
-    if(!name)return;
+    const name = prompt("Folder Name");
 
-    data.folders.push({
+    if (!name || name.trim() === "")
+        return;
 
-        id:Date.now(),
+    const folder = {
 
-        name:name,
+        id: Date.now(),
 
-        notes:[]
-    });
+        name: name.trim(),
+
+        notes: []
+
+    };
+
+    data.folders.push(folder);
+
+    currentFolder = folder;
+
+    currentNote = null;
+
+    titleInput.value = "";
+    contentInput.value = "";
 
     renderFolders();
 
+    renderNotes();
+
+    saveCurrent();
+
 };
 
-document.getElementById("newNote").onclick=()=>{
+// ------------------------------------
+// New Note
+// ------------------------------------
 
-    if(!currentFolder){
+document.getElementById("newNote").onclick = () => {
 
-        alert("Select a folder");
+    if (!currentFolder) {
+
+        alert("Please select a folder.");
 
         return;
 
     }
 
-    const note={
+    const note = {
 
-        id:Date.now(),
+        id: Date.now(),
 
-        title:"Untitled",
+        title: "Untitled",
 
-        content:""
+        content: ""
 
     };
 
     currentFolder.notes.push(note);
 
+    currentNote = note;
+
+    titleInput.value = note.title;
+
+    contentInput.value = note.content;
+
     renderNotes();
+
+    autoSave();
 
 };
 
-document.getElementById("save").onclick=saveCurrent;
-function saveCurrent(){
+// ------------------------------------
+// Auto Save
+// ------------------------------------
 
-    if(currentNote){
+function autoSave() {
 
-        currentNote.title=titleInput.value;
+    clearTimeout(saveTimer);
 
-        currentNote.content=contentInput.value;
-    }
-
-    fetch("/save",{
-
-        method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify(data)
-
-    });
-
-    renderNotes();
+    saveTimer = setTimeout(saveCurrent, 500);
 
 }
 
+// ------------------------------------
+// Save
+// ------------------------------------
+
+async function saveCurrent() {
+
+    if (currentNote) {
+
+        currentNote.title = titleInput.value;
+
+        currentNote.content = contentInput.value;
+
+    }
+
+    try {
+
+        await fetch("/save", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify(data)
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+// ------------------------------------
+// Editor Events
+// ------------------------------------
+
+titleInput.addEventListener("input", () => {
+
+    if (!currentNote)
+        return;
+
+    currentNote.title = titleInput.value;
+
+    renderNotes();
+
+    autoSave();
+
+});
+
+contentInput.addEventListener("input", () => {
+
+    if (!currentNote)
+        return;
+
+    currentNote.content = contentInput.value;
+
+    autoSave();
+
+});
+
+// ------------------------------------
+// Manual Save (typewriter button)
+// ------------------------------------
+
+const saveBtn = document.getElementById("save");
+
+saveBtn.addEventListener("click", (e) => {
+
+    e.stopPropagation();
+
+    if (!currentNote)
+        return;
+
+    playTypewriter();
+
+    saveCurrent();
+
+});
+
+// ------------------------------------
+// Inventory Slot Clicks
+// ------------------------------------
+
+document.querySelectorAll(".item-slot").forEach(slot => {
+
+    slot.addEventListener("click", (e) => {
+
+        e.stopPropagation();
+
+        playSelect();
+
+    });
+
+});
+
+// ------------------------------------
+// Initial Load
+// ------------------------------------
+
 loadNotes();
+
+const bgMusic = document.getElementById("bgMusic");
+bgMusic.volume = 0.36;
+
+const startOverlay = document.getElementById("startOverlay");
+
+if (startOverlay) {
+
+    startOverlay.addEventListener("click", () => {
+
+        bgMusic.play().catch(() => {});
+
+        startOverlay.remove();
+
+    }, { once: true });
+
+}

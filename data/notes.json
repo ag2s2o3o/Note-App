@@ -1,29 +1,40 @@
 {
     "folders": [
         {
-            "id": 1,
-            "name": "General",
-            "notes": [
-                {
-                    "content": "Welcome to NoteVault!",
-                    "id": 1,
-                    "title": "Welcome"
-                }
-            ]
-        },
-        {
             "id": 1782669191152,
             "name": "Engineering mechanics",
             "notes": [
                 {
-                    "content": "Learn from lecture.",
+                    "content": "Learn from lecture. But it might be better to learn from question. ",
                     "id": 1782669196445,
                     "title": "Auto transformer"
                 },
                 {
+                    "content": "Do questions to understand",
                     "id": 1782669331233,
-                    "title": "SC OC",
-                    "content": "Do questions to understand "
+                    "title": "SC OC"
+                }
+            ]
+        },
+        {
+            "id": 1782762713704,
+            "name": "Engineering Mathematics",
+            "notes": [
+                {
+                    "content": "Practise more questions pyq",
+                    "id": 1782762715789,
+                    "title": "Determinants and Matrices"
+                }
+            ]
+        },
+        {
+            "id": 1783009446671,
+            "name": "Signals and system",
+            "notes": [
+                {
+                    "content": "Practise more",
+                    "id": 1783009454019,
+                    "title": "Basic signals and LTI system"
                 }
             ]
         }

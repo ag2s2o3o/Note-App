@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
+import random
 
 app = Flask(__name__)
 
@@ -22,7 +23,14 @@ def save_data(data):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    tracks = [
+        "01 R.E. 1 Save Room- Safe Haven.mp3",
+        "02 R.E. 2 Save Room- Secure Place.mp3",
+        "06 R.E. 4 Save Theme.mp3",
+        "re7_save_theme.mp3"
+    ]
+    chosen_track = random.choice(tracks)
+    return render_template("index.html", track_file=chosen_track)
 
 
 @app.route("/notes")
